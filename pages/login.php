@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 ?>
 
 <!DOCTYPE html>
@@ -113,6 +113,11 @@
             /></a>
           </li>
         </ul>
+
+        <?php
+        if(isset($_SESSION['error'])) echo $_SESSION['error'];
+        ?>
+
       </footer>
     </div>
     <script
