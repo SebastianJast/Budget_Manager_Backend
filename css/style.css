@@ -1,0 +1,26 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    height: 100vh;
+    background-color: #000235;
+}
+
+.btn-register {
+    background-color: #778DFC;
+}
+
+.btn-sign-in {
+    font-size: 1.2em;
+}
+
+.pen {
+    cursor: pointer;
+}
+
+.trash {
+    cursor: pointer;
+}
