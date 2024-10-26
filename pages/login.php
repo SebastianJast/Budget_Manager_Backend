@@ -44,7 +44,7 @@
                   class="form-control"
                   id="floatingInput"
                   placeholder="name@example.com"
-                  name="email"
+                  name="login_email"
                 />
                 <label class="label-login" for="floatingInput"
                   >Email address</label
