@@ -1,3 +1,7 @@
+<?php
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -32,7 +36,7 @@
             />
           </div>
           <div class="container col-12 col-sm-12 col-lg-6">
-            <form class="w-100">
+            <form class="w-100" action="log_in.php" method="post">
               <h1 class="h1 mb-3 fw-bold text-white">Logowanie</h1>
               <div class="form-floating my-4">
                 <input
@@ -40,6 +44,7 @@
                   class="form-control"
                   id="floatingInput"
                   placeholder="name@example.com"
+                  name="email"
                 />
                 <label class="label-login" for="floatingInput"
                   >Email address</label
@@ -51,6 +56,7 @@
                   class="form-control"
                   id="floatingPassword"
                   placeholder="Password"
+                  name="password"
                 />
                 <label for="floatingPassword">Password</label>
               </div>
