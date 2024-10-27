@@ -1,5 +1,11 @@
 <?php
 session_start();
+
+if((isset($_SESSION['logged_in']))&&($_SESSION['logged_in']==true)) {
+  header('Location: balance.php');
+  exit();
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -60,6 +66,9 @@ session_start();
                 />
                 <label for="floatingPassword">Password</label>
               </div>
+              <?php
+                if(isset($_SESSION['error'])) echo $_SESSION['error'];
+              ?>
               <div class="form-check text-start my-3">
                 <input
                   class="form-check-input"
@@ -103,7 +112,7 @@ session_start();
         <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
           <li class="ms-3">
             <a
-              class="text-body-secondary"
+              class="text-body-secondary"ą
               href="https://github.com/SebastianJast"
               ><img
                 src="../fonts/github-brands-solid.svg"
@@ -113,11 +122,6 @@ session_start();
             /></a>
           </li>
         </ul>
-
-        <?php
-        if(isset($_SESSION['error'])) echo $_SESSION['error'];
-        ?>
-
       </footer>
     </div>
     <script
