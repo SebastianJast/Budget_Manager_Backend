@@ -64,8 +64,55 @@ if(isset($_POST['email'])) {
 
   require_once "connect.php";
 
+  mysqli_report(MYSQLI_REPORT_STRICT);
 
+  try
+  {
+    $connect = new mysqli($host, $db_user, $db_password, $db_name);
+    if($connect->connect_erno!=0)
+    {
+      throw new Exception(mysqli_connect_error());
 
+    } else {
+      $result = $connect->query("SELECT id FROM users WHERE email='$email'");
+
+      if(!$result) throw new Exception($connect->error);
+      $how_many_emails = $result->num_rows;
+      if($how_many_emails>0) 
+      {
+        $everything_is_OK = false;
+        $_SESSION['e_email'] = "Istnieje już konto przypisane do tego adresu email";
+      }
+
+      $result = $connect->query("SELECT id FROM users WHERE username='$login'");
+
+      if(!$result) throw new Exception($connect->error);
+      $how_many_login = $result->num_rows;
+      if($how_many_login>0)
+      {
+        $everything_is_OK = false;
+        $_SESSION['e_login'] = "Istnieje już użytkownik o takim loginie! Wybierz inny."; 
+      }
+
+      if($everything_is_OK == true) 
+      {
+        if($connect->query("INSERT INTO users VALUES (NULL, '$login', '$password_hash', '$email')"))
+        {
+          $_SESSION['successful_registration'] = true;
+          header('Location: login.php');
+        }
+        else {
+          throw new Exception($polaczenie->error);
+        }
+      }
+
+      $connect->close();
+
+    }
+  } catch(Exception $e) {
+    echo'<span style="color:red;"> Błąd servera! Przepraszamy za niedogodności i prosimy rejestrację w innym terminie!</span>';
+    // echo'<br/>Informacja developerska: '.$e;
+  }
 }
 
 ?>
