@@ -9,13 +9,14 @@ if((!isset($_POST['email'])) || (!isset($_POST['password'])))
 }
 
 require_once "connect.php";
+mysqli_report(MYSQLI_REPORT_STRICT);
 
-$connect = @new mysqli($host, $db_user, $db_password, $db_name);
+try {
+    $connect = new mysqli($host, $db_user, $db_password, $db_name);
 
 if($connect->connect_errno!=0) {
-    echo "Error: ".$connect->connect_errno;
+    throw new Exception(mysqli_connect_errno());
 }
-
 else {
     $email = $_POST['email'];
     $password = $_POST['password'];
@@ -51,10 +52,20 @@ else {
                 $_SESSION['error'] = '<br/><span style = "color:red"> Niepoprawny login lub hasło </span>';
                 header('Location: login.php');
         }
+    }
+    else
+    {
+        throw new Exception($connect->error);
+    }
         
         $connect->close();
 
     }
+}
+catch(Exception $e)
+{
+    echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
+    echo '<br />Informacja developerska: '.$e; 
 }
 
 ?>
