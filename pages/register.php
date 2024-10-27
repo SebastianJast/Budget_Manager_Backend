@@ -1,9 +1,82 @@
+<?php
+
+session_start();
+
+if(isset($_POST['email'])) {
+
+  $everything_is_OK = true;
+
+  $login = $_POST['login'];
+
+  if((strlen($login)<3) || (strlen($login)>20))
+  {
+    $everything_is_OK = false;
+    $_SESSION['e_login'] = "Login musi posiadać od 3 do 20 znaków!";
+  }
+
+  if(ctype_alnum($login) == false) {
+    $everything_is_OK = false;
+    $_SESSION['e_login'] = "Login może składać się tylko z liter i cyfr (bez polskich znalów)";
+  }
+
+  $email = $_POST['email'];
+  $emailB = filter_var($email, FILTER_SANITIZE_EMAIL);
+
+  if((filter_var($emailB,FILTER_VALIDATE_EMAIL) == false) || ($emailB != $email)) 
+  {
+    $everything_is_OK = false;
+    $_SESSION['e_email'] = "Podaj poprawny adres e-mail";
+  }
+
+  $password1 = $_POST['password1'];
+  $password2 = $_POST['password2'];
+
+  if((strlen($password1)<8) || (strlen($password1)>20))
+  {
+    $everything_is_OK = false;
+    $_SESSION['e_password'] = "Hasło musi posiadać od 8 do 20 znaków";
+  }
+
+  if($password1!=$password2) 
+  {
+    $everything_is_OK = false;
+    $_SESSION['e_password'] = "Podane hasła nie są identyczne";
+  }
+
+  $password_hash = password_hash($password1, PASSWORD_DEFAULT);
+
+  if(!isset($_POST['terms']))
+  {
+    $everything_is_OK = false;
+    $_SESSION['e_terms'] = "Potwierdż akceptację regulaminu!";
+  }
+
+  $secret = "6LdJi1kqAAAAALo14d7EN0pfpyyUKObNwTKSRQK1";
+
+  $check= file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret='.$secret.'&response='.$_POST['g-recaptcha-response']);
+
+  $answer = json_decode($check);
+  if($answer->success == false)
+  {
+    $everything_is_OK = false;
+    $_SESSION['e_bot'] = "Potwierdź, że nie jesteś botem!";
+  }
+
+  require_once "connect.php";
+
+
+
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Budget Manager</title>
+    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -32,43 +105,71 @@
             />
           </div>
           <div class="container col-12 col-sm-12 col-lg-6">
-            <form class="w-100">
+            <form class="w-100" method="post">
               <h1 class="h1 mb-3 fw-bold text-white">Rejestracja</h1>
               <div class="form-floating my-4">
+                <input
+                  type="login"
+                  class="form-control"
+                  id="floatingInput"
+                  placeholder="login"
+                  name="login"
+                />
+                <label class="label-login" for="floatingInput">Login</label>
+              </div>
+              <?php
+
+              if(isset($_SESSION['e_login'])) {
+                echo '<div class="error">'.$_SESSION['e_login'].'</div>';
+                unset($_SESSION['e_login']);
+              }
+
+              ?>
+              <div class="form-floating">
                 <input
                   type="email"
                   class="form-control"
                   id="floatingInput"
-                  placeholder="name@example.com"
+                  placeholder="Email"
+                  name="email"
                 />
-                <label class="label-login" for="floatingInput">Login</label>
+                <label for="floatingInput">Email</label>
               </div>
-              <div class="form-floating">
-                <input
-                  type="password"
-                  class="form-control"
-                  id="floatingPassword"
-                  placeholder="Password"
-                />
-                <label for="floatingPassword">Email</label>
-              </div>
+              <?php
+
+              if(isset($_SESSION['e_email'])) {
+                echo '<div class="error">'.$_SESSION['e_email'].'</div>';
+                unset($_SESSION['e_email']);
+              }
+
+              ?>
               <div class="form-floating my-4">
                 <input
                   type="password"
                   class="form-control"
-                  id="floatingPassword"
+                  id="floatingInput"
                   placeholder="Password"
+                  name="password1"
                 />
-                <label for="floatingPassword">Hasło</label>
+                <label for="floatingInput">Hasło</label>
               </div>
+              <?php
+
+              if(isset($_SESSION['e_password'])){
+                echo '<div class="error">'.$_SESSION['e_password'].'</div>';
+                unset($_SESSION['e_password']);
+              }  
+
+              ?>
               <div class="form-floating my-4">
                 <input
                   type="password"
                   class="form-control"
-                  id="floatingPassword"
+                  id="floatingInput"
                   placeholder="Password"
+                  name="password2"
                 />
-                <label for="floatingPassword">Powtórz hasło</label>
+                <label for="floatingInput">Powtórz hasło</label>
               </div>
               <div class="form-check text-start my-3">
                 <input
@@ -76,14 +177,32 @@
                   type="checkbox"
                   value="remember-me"
                   id="flexCheckDefault"
+                  name="terms"
                 />
                 <label
                   class="form-check-label text-white"
                   for="flexCheckDefault"
                 >
-                  Remember me
+                  Akceptuję regulamin
                 </label>
               </div>
+              <?php
+              if(isset($_SESSION['e_terms'])) {
+                echo '<div class="error">'.$_SESSION['e_terms'].'</div>';
+                unset($_SESSION['e_terms']);
+              }
+
+              ?>
+              <div class="g-recaptcha" data-sitekey="6LdJi1kqAAAAAKEHlW_V58FfoshJbfQ3bHsi_dxg" data-action="LOGIN"></div>
+              <br>
+              <?php
+              
+              if(isset($_SESSION['e_bot'])) {
+                echo '<div class="error">'.$_SESSION['e_bot'].'</div>';
+                unset($_SESSION['e_bot']);
+              }
+
+              ?>
               <button
                 class="btn btn-warning w-100 py-3 btn-sign-in text-white"
                 type="submit"

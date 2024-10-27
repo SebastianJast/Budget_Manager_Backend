@@ -2,7 +2,7 @@
 
 session_start();
 
-if((!isset($_POST['login_email'])) || (!isset($_POST['password'])))
+if((!isset($_POST['email'])) || (!isset($_POST['password'])))
 {
     header('Location: login.php');
     exit();
@@ -17,38 +17,39 @@ if($connect->connect_errno!=0) {
 }
 
 else {
-    $login = $_POST['login_email'];
+    $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $login = htmlentities($login, ENT_QUOTES, "UTF-8");
-    $password = htmlentities($password, ENT_QUOTES, "UTF-8");
-
+    $email = htmlentities($email, ENT_QUOTES, "UTF-8");
+ 
     if($result= @$connect->query(
-        sprintf("SELECT * FROM users WHERE email ='%s' AND password= '%s'",
-        mysqli_real_escape_string($connect,$login),
-        mysqli_real_escape_string($connect,$password)
-    )));
+        sprintf("SELECT * FROM users WHERE email ='%s'",
+        mysqli_real_escape_string($connect,$email))))
      {
         $how_many_users = $result->num_rows;
-        {
-            if($how_many_users > 0) {
+        if($how_many_users > 0) {
 
+            $row = $result->fetch_assoc();
+            
+            if(password_verify($password, $row['password'])) {
                 $_SESSION['logged_in'] = true;
-
-                $row = $result->fetch_assoc();
 
                 $_SESSION['id'] = $row['id'];
                 $_SESSION['username'] = $row['username'];
                 $_SESSION['email'] = $row['email'];
 
                 unset($_SESSION['error']);
-
                 $result->free_result();
                 header('Location: balance.php');
+
+            }else {
+                $_SESSION['error'] = '<span style="color:red">Nieprawidłowy login lub hasło!</span>';
+				header('Location: login.php');
+            }
+            
             }else {
                 $_SESSION['error'] = '<br/><span style = "color:red"> Niepoprawny login lub hasło </span>';
                 header('Location: login.php');
-            }
         }
         
         $connect->close();

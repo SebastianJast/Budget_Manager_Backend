@@ -50,7 +50,7 @@ if((isset($_SESSION['logged_in']))&&($_SESSION['logged_in']==true)) {
                   class="form-control"
                   id="floatingInput"
                   placeholder="name@example.com"
-                  name="login_email"
+                  name="email"
                 />
                 <label class="label-login" for="floatingInput"
                   >Email address</label
