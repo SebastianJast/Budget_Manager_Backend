@@ -62,6 +62,12 @@ if(isset($_POST['email'])) {
     $_SESSION['e_bot'] = "Potwierdź, że nie jesteś botem!";
   }
 
+  $_SESSION['fr_login'] = $login;
+  $_SESSION['fr_email'] = $email;
+  $_SESSION['fr_password1'] = $password1;
+  $_SESSION['fr_password2'] = $password2;
+  if(isset($_POST['terms'])) $_SESSION['fr_terms'] = true;
+
   require_once "connect.php";
 
   mysqli_report(MYSQLI_REPORT_STRICT);
@@ -99,7 +105,7 @@ if(isset($_POST['email'])) {
         if($connect->query("INSERT INTO users VALUES (NULL, '$login', '$password_hash', '$email')"))
         {
           $_SESSION['successful_registration'] = true;
-          header('Location: login.php');
+          header('Location: welcome.php');
         }
         else {
           throw new Exception($polaczenie->error);
