@@ -1,3 +1,15 @@
+<?php
+
+session_start();
+
+if(!isset($_SESSION['logged_in'])) 
+{
+  header('Location: login.php');
+  exit();
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -56,7 +68,7 @@
                   <a href="#" class="nav-link text-white">Ustawienia</a>
                 </li>
                 <li class="nav-item px-2  ">
-                  <a href="#" class="nav-link text-white">Wyloguj się</a>
+                  <a href="logout.php" class="nav-link text-white">Wyloguj się</a>
                 </li>
                 <li class="nav-item dropdown">
                   <a
