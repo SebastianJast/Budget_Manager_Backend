@@ -1,3 +1,36 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['logged_in'])) {
+  header('Location: login.php');
+  exit();
+}
+
+require_once "connect.php";
+
+mysqli_report(MYSQLI_REPORT_STRICT);
+
+try {
+  $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+  if ($connect->connect_errno != 0) {
+    throw new Exception(mysqli_connect_errno());
+  } else {
+    if (isset($_POST["submit"])) {
+      $category = $_POST['category'];
+      $id = $_SESSION['id'];
+      $result = $connect->query("INSERT INTO incomes_category_assigned_to_users VALUES (NULL, '$id', '$category')");
+
+    }
+    $connect->close();
+  }
+} catch (Exception $e) {
+  echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
+  // echo '<br />Informacja developerska: ' . $e;
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -40,7 +73,7 @@
                 <a href="#" class="nav-link text-white">Ustawienia</a>
               </li>
               <li class="nav-item px-2  ">
-                <a href="#" class="nav-link text-white">Wyloguj się</a>
+                <a href="logout.php" class="nav-link text-white">Wyloguj się</a>
               </li>
             </ul>
           </div>
@@ -56,7 +89,7 @@
             height="500" loading="lazy" />
         </div>
         <div class="container col-12 col-sm-12 col-lg-6">
-          <form class="w-100">
+          <form class="w-100" method="post">
             <h1 class="h1 mb-3 fw-bold text-white">Wprowadź dane</h1>
             <div class="form-floating my-4">
               <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" required />
@@ -67,14 +100,13 @@
               <label for="dateInput">Data</label>
             </div>
             <div class="form-floating my-4">
-              <select id="categorySelect" class="form-control" required>
+              <select id="categorySelect" class="form-control" name="category" required>
                 <option value="">-- Wybierz kategorię --</option>
                 <?php
                 require_once "connect.php";
                 mysqli_report(MYSQLI_REPORT_STRICT);
 
                 try {
-
                   $connect = new mysqli($host, $db_user, $db_password, $db_name);
 
                   if ($connect->connect_errno != 0) {
@@ -103,7 +135,7 @@
             </div>
             <div class="container d-flex gap-5 px-0">
               <button class="btn btn-danger w-100 py-3 text-white" type="reset">Anuluj</button>
-              <button class="btn btn-success w-100 py-3 text-white" type="submit">Dodaj</button>
+              <button class="btn btn-success w-100 py-3 text-white" type="submit" name="submit">Dodaj</button>
             </div>
           </form>
         </div>

@@ -106,9 +106,9 @@ if (isset($_POST['email'])) {
 
     }
   } catch (Exception $e) {
-    echo '<span style="color:red;"> Błąd servera! Przepraszamy za niedogodności i prosimy rejestrację w innym terminie!</span>';
-    // echo'<br/>Informacja developerska: '.$e;
-  }
+    error_log("Błąd aplikacji: " . $e->getMessage());
+    echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o rejestrację w innym terminie!</span>';
+}
 }
 
 ?>

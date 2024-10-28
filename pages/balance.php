@@ -39,7 +39,7 @@ if (!isset($_SESSION['logged_in'])) {
                 <a href="#" class="nav-link text-white" aria-current="page">Strona główna</a>
               </li>
               <li class="nav-item px-2">
-                <a href="#" class="nav-link text-white">Dodaj przychód</a>
+                <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>
               </li>
               <li class="nav-item px-2">
                 <a href="#" class="nav-link text-white">Dodaj wydatek</a>
