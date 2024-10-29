@@ -21,7 +21,7 @@ try {
       $category = $_POST['category'];
       $amount = $_POST['amount'];
 
-      if (is_numeric($amount) || $amount <= 0) {
+      if (!is_numeric($amount) || $amount <= 0) {
         $_SESSION['e_amount'] = "Kwota musi być liczbą dodatnią!";
         header("Location: addincome.php");
         exit();
@@ -50,8 +50,10 @@ try {
         exit();
       }
 
-      $insert = $connect->query("INSERT INTO incomes VALUES (NULL, '$id', '$category_id', '$amount', '$format_date', '$comment')");
-      if ($insert === false) {
+      if ($connect->query("INSERT INTO incomes VALUES (NULL, '$id', '$category_id', '$amount', '$format_date', '$comment')")) {
+        $_SESSION['successful_addincome'] = true;
+        header('Location: addincome_success.php');
+      } else {
         throw new Exception($connect->error);
       }
     }
@@ -155,7 +157,9 @@ try {
                     throw new Exception(mysqli_connect_error());
                   } else {
 
-                    $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users");
+                    $id = $_SESSION["id"];
+
+                    $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users WHERE user_id ='$id'");
 
                     while ($category = $result->fetch_assoc()) {
                       echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
