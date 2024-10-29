@@ -17,16 +17,49 @@ try {
     throw new Exception(mysqli_connect_errno());
   } else {
     if (isset($_POST["submit"])) {
-      $category = $_POST['category'];
-      $id = $_SESSION['id'];
-      $result = $connect->query("INSERT INTO incomes_category_assigned_to_users VALUES (NULL, '$id', '$category')");
 
+      $category = $_POST['category'];
+      $amount = $_POST['amount'];
+
+      if (is_numeric($amount) || $amount <= 0) {
+        $_SESSION['e_amount'] = "Kwota musi być liczbą dodatnią!";
+        header("Location: addincome.php");
+        exit();
+      }
+
+      $comment = $_POST['comment'];
+
+      $date = $_POST['date'];
+      $dateTime = DateTime::createFromFormat('Y-m-d', $date);
+      if ($dateTime === false) {
+        echo "Błąd: Niepoprawny format daty!";
+        exit();
+      }
+      $format_date = $dateTime->format('Y-m-d');
+
+      $id = $_SESSION['id'];
+
+      $result = $connect->query("SELECT id FROM incomes_category_assigned_to_users WHERE name = '$category'");
+      if ($result === false) {
+        throw new Exception($connect->error);
+      }
+
+      $category_id = $result->fetch_assoc()['id'];
+      if ($category_id === null) {
+        echo "Błąd: kategoria nie została znaleziona";
+        exit();
+      }
+
+      $insert = $connect->query("INSERT INTO incomes VALUES (NULL, '$id', '$category_id', '$amount', '$format_date', '$comment')");
+      if ($insert === false) {
+        throw new Exception($connect->error);
+      }
     }
     $connect->close();
   }
 } catch (Exception $e) {
-    echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
-    // echo '<br />Informacja developerska: ' . $e;
+  echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
+  // echo '<br />Informacja developerska: ' . $e;
 }
 
 ?>
@@ -92,11 +125,20 @@ try {
           <form class="w-100" method="post">
             <h1 class="h1 mb-3 fw-bold text-white">Wprowadź dane</h1>
             <div class="form-floating my-4">
-              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" required />
+              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" name="amount"
+                required />
               <label for="floatingInput">Kwota</label>
             </div>
+            <?php
+
+            if (isset($_SESSION['e_amount'])) {
+              echo '<div class="error">' . $_SESSION['e_amount'] . '</div>';
+              unset($_SESSION['e_amount']);
+            }
+
+            ?>
             <div class="form-floating my-4">
-              <input type="date" class="form-control" id="dateInput" required />
+              <input type="date" class="form-control" id="dateInput" name="date" required />
               <label for="dateInput">Data</label>
             </div>
             <div class="form-floating my-4">
@@ -113,7 +155,7 @@ try {
                     throw new Exception(mysqli_connect_error());
                   } else {
 
-                    $result = $connect->query("SELECT name FROM incomes_category_default");
+                    $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users");
 
                     while ($category = $result->fetch_assoc()) {
                       echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
@@ -130,7 +172,7 @@ try {
             </div>
 
             <div class="form-floating my-4">
-              <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" />
+              <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" name="comment" />
               <label for="commentInput">Komentarz</label>
             </div>
             <div class="container d-flex gap-5 px-0">
