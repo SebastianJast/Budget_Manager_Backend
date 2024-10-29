@@ -31,7 +31,7 @@ try {
         }
 
         if (
-            $result = @$connect->query(
+            $result = $connect->query(
                 sprintf(
                     "SELECT * FROM users WHERE email ='%s'",
                     mysqli_real_escape_string($connect, $email)
@@ -72,7 +72,7 @@ try {
     }
 } catch (Exception $e) {
     echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
-    echo '<br />Informacja developerska: ' . $e;
+    // echo '<br />Informacja developerska: ' . $e;
 }
 
 ?>
