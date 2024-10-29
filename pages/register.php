@@ -95,6 +95,10 @@ if (isset($_POST['email'])) {
 
       if ($everything_is_OK == true) {
         if ($connect->query("INSERT INTO users VALUES (NULL, '$login', '$password_hash', '$email')")) {
+          $new_user_id = $connect->insert_id;
+          if (!$connect->query("INSERT INTO incomes_category_assigned_to_users (user_id, name) SELECT '$new_user_id', name FROM incomes_category_default")) {
+            throw new Exception($connect->error);
+          }
           $_SESSION['successful_registration'] = true;
           header('Location: welcome.php');
         } else {
@@ -108,7 +112,7 @@ if (isset($_POST['email'])) {
   } catch (Exception $e) {
     error_log("Błąd aplikacji: " . $e->getMessage());
     echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o rejestrację w innym terminie!</span>';
-}
+  }
 }
 
 ?>
@@ -202,8 +206,8 @@ if (isset($_POST['email'])) {
               echo '<div class="error">' . $_SESSION['e_bot'] . '</div>';
               unset($_SESSION['e_bot']);
             }
-
             ?>
+            <br>
             <button class="btn btn-warning w-100 py-3 btn-sign-in text-white" type="submit">
               Zarejestruj
             </button>
