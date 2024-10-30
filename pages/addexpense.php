@@ -6,6 +6,65 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
+require_once "connect.php";
+
+mysqli_report(MYSQLI_REPORT_STRICT);
+
+try {
+  $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+  if ($connect->connect_errno != 0) {
+    throw new Exception(mysqli_connect_errno());
+  } else {
+    if (isset($_POST["submit"])) {
+
+      $category = $_POST['category'];
+      $amount = $_POST['amount'];
+      $method = $_POST['method'];
+
+      if (!is_numeric($amount) || $amount <= 0) {
+        $_SESSION['e_amount'] = "Kwota musi być liczbą dodatnią!";
+        header("Location: addincome.php");
+        exit();
+      }
+
+      $comment = $_POST['comment'];
+
+      $date = $_POST['date'];
+      $dateTime = DateTime::createFromFormat('Y-m-d', $date);
+      if ($dateTime === false) {
+        echo "Błąd: Niepoprawny format daty!";
+        exit();
+      }
+      $format_date = $dateTime->format('Y-m-d');
+
+      $id = $_SESSION['id'];
+
+      $result = $connect->query("SELECT id FROM incomes_category_assigned_to_users WHERE name = '$category'");
+      if ($result === false) {
+        throw new Exception($connect->error);
+      }
+
+      $category_id = $result->fetch_assoc()['id'];
+      if ($category_id === null) {
+        echo "Błąd: kategoria nie została znaleziona";
+        exit();
+      }
+
+      if ($connect->query("INSERT INTO expenses VALUES (NULL, '$id', '$category_id','$method' ,'$amount', '$format_date', '$comment')")) {
+        $_SESSION['successful_addexpense'] = true;
+        header('Location: addincome_success.php');
+      } else {
+        throw new Exception($connect->error);
+      }
+    }
+    $connect->close();
+  }
+} catch (Exception $e) {
+  echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
+  // echo '<br />Informacja developerska: ' . $e;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -69,15 +128,15 @@ if (!isset($_SESSION['logged_in'])) {
           <form class="w-100">
             <h1 class="h1 mb-3 fw-bold text-white">Wprowadź dane</h1>
             <div class="form-floating my-4">
-              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" required />
+              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" name="amount" required />
               <label for="floatingInput">Kwota</label>
             </div>
             <div class="form-floating my-4">
-              <input type="date" class="form-control" id="dateInput" required />
+              <input type="date" class="form-control" id="dateInput" name="data" required />
               <label for="dateInput">Data</label>
             </div>
             <div class="form-floating my-4">
-              <select id="categorySelect" class="form-control" required>
+              <select id="categorySelect" class="form-control" name="category" required>
                 <option value="">-- Wybierz kategorię --</option>
                 <?php
                 require_once "connect.php";
@@ -108,7 +167,7 @@ if (!isset($_SESSION['logged_in'])) {
               <label for="categorySelect">Kategoria</label>
             </div>
             <div class="form-floating my-4">
-              <select id="categorySelect" class="form-control" required>
+              <select id="categorySelect" class="form-control" name="method"required>
                 <option value="">-- Wybierz metodę --</option>
                 <?php
                 require_once "connect.php";
@@ -144,7 +203,7 @@ if (!isset($_SESSION['logged_in'])) {
             </div>
             <div class="container d-flex gap-5 px-0">
               <button class="btn btn-danger w-100 py-3 text-white" type="reset">Anuluj</button>
-              <button class="btn btn-success w-100 py-3 text-white" type="submit">Dodaj</button>
+              <button class="btn btn-success w-100 py-3 text-white" type="submit" name="submit">Dodaj</button>
             </div>
           </form>
         </div>
