@@ -99,6 +99,12 @@ if (isset($_POST['email'])) {
           if (!$connect->query("INSERT INTO incomes_category_assigned_to_users (user_id, name) SELECT '$new_user_id', name FROM incomes_category_default")) {
             throw new Exception($connect->error);
           }
+          if (!$connect->query("INSERT INTO payment_methods_assigned_to_users (user_id, name) SELECT '$new_user_id', name FROM payment_methods_default")) {
+            throw new Exception($connect->error);
+          }
+          if (!$connect->query("INSERT INTO expenses_category_assigned_to_users (user_id, name) SELECT '$new_user_id', name FROM expenses_category_default")) {
+            throw new Exception($connect->error);
+          }
           $_SESSION['successful_registration'] = true;
           header('Location: welcome.php');
         } else {

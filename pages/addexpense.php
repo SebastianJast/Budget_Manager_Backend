@@ -6,64 +6,6 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
-require_once "connect.php";
-
-mysqli_report(MYSQLI_REPORT_STRICT);
-
-try {
-  $connect = new mysqli($host, $db_user, $db_password, $db_name);
-
-  if ($connect->connect_errno != 0) {
-    throw new Exception(mysqli_connect_errno());
-  } else {
-    if (isset($_POST["submit"])) {
-
-      $category = $_POST['category'];
-      $amount = $_POST['amount'];
-
-      if (!is_numeric($amount) || $amount <= 0) {
-        $_SESSION['e_amount'] = "Kwota musi być liczbą dodatnią!";
-        header("Location: addincome.php");
-        exit();
-      }
-
-      $comment = $_POST['comment'];
-
-      $date = $_POST['date'];
-      $dateTime = DateTime::createFromFormat('Y-m-d', $date);
-      if ($dateTime === false) {
-        echo "Błąd: Niepoprawny format daty!";
-        exit();
-      }
-      $format_date = $dateTime->format('Y-m-d');
-
-      $id = $_SESSION['id'];
-
-      $result = $connect->query("SELECT id FROM incomes_category_assigned_to_users WHERE name = '$category'");
-      if ($result === false) {
-        throw new Exception($connect->error);
-      }
-
-      $category_id = $result->fetch_assoc()['id'];
-      if ($category_id === null) {
-        echo "Błąd: kategoria nie została znaleziona";
-        exit();
-      }
-
-      if ($connect->query("INSERT INTO incomes VALUES (NULL, '$id', '$category_id', '$amount', '$format_date', '$comment')")) {
-        $_SESSION['successful_addincome'] = true;
-        header('Location: addincome_success.php');
-      } else {
-        throw new Exception($connect->error);
-      }
-    }
-    $connect->close();
-  }
-} catch (Exception $e) {
-  echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o wizytę w innym terminie!</span>';
-  // echo '<br />Informacja developerska: ' . $e;
-}
-
 ?>
 
 <!DOCTYPE html>
@@ -93,7 +35,7 @@ try {
           <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav flex-lg-row flex-column align-items-center">
               <li class="nav-item px-2">
-                <a href="main_page.php" class="nav-link text-white" aria-current="page">Strona główna</a>
+                <a href="#" class="nav-link text-white" aria-current="page">Strona główna</a>
               </li>
               <li class="nav-item px-2">
                 <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>
@@ -124,27 +66,18 @@ try {
             height="500" loading="lazy" />
         </div>
         <div class="container col-12 col-sm-12 col-lg-6">
-          <form class="w-100" method="post">
+          <form class="w-100">
             <h1 class="h1 mb-3 fw-bold text-white">Wprowadź dane</h1>
             <div class="form-floating my-4">
-              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" name="amount"
-                required />
+              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" required />
               <label for="floatingInput">Kwota</label>
             </div>
-            <?php
-
-            if (isset($_SESSION['e_amount'])) {
-              echo '<div class="error">' . $_SESSION['e_amount'] . '</div>';
-              unset($_SESSION['e_amount']);
-            }
-
-            ?>
             <div class="form-floating my-4">
-              <input type="date" class="form-control" id="dateInput" name="date" required />
+              <input type="date" class="form-control" id="dateInput" required />
               <label for="dateInput">Data</label>
             </div>
             <div class="form-floating my-4">
-              <select id="categorySelect" class="form-control" name="category" required>
+              <select id="categorySelect" class="form-control" required>
                 <option value="">-- Wybierz kategorię --</option>
                 <?php
                 require_once "connect.php";
@@ -159,7 +92,7 @@ try {
 
                     $id = $_SESSION["id"];
 
-                    $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users WHERE user_id ='$id'");
+                    $result = $connect->query("SELECT name FROM expenses_category_assigned_to_users WHERE user_id ='$id'");
 
                     while ($category = $result->fetch_assoc()) {
                       echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
@@ -172,16 +105,46 @@ try {
                 }
                 ?>
               </select>
-              <label for=" categorySelect">Kategoria</label>
+              <label for="categorySelect">Kategoria</label>
             </div>
-
             <div class="form-floating my-4">
-              <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" name="comment" />
+              <select id="categorySelect" class="form-control" required>
+                <option value="">-- Wybierz metodę --</option>
+                <?php
+                require_once "connect.php";
+                mysqli_report(MYSQLI_REPORT_STRICT);
+
+                try {
+                  $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                  if ($connect->connect_errno != 0) {
+                    throw new Exception(mysqli_connect_error());
+                  } else {
+
+                    $id = $_SESSION["id"];
+
+                    $result = $connect->query("SELECT name FROM payment_methods_assigned_to_users WHERE user_id ='$id'");
+
+                    while ($category = $result->fetch_assoc()) {
+                      echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
+                    }
+
+                    $connect->close();
+                  }
+                } catch (Exception $e) {
+                  echo '<option value="">Błąd ładowania kategorii </option>';
+                }
+                ?>
+              </select>
+              <label for="categorySelect">Metoda płatności</label>
+            </div>
+            <div class="form-floating my-4">
+              <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" />
               <label for="commentInput">Komentarz</label>
             </div>
             <div class="container d-flex gap-5 px-0">
               <button class="btn btn-danger w-100 py-3 text-white" type="reset">Anuluj</button>
-              <button class="btn btn-success w-100 py-3 text-white" type="submit" name="submit">Dodaj</button>
+              <button class="btn btn-success w-100 py-3 text-white" type="submit">Dodaj</button>
             </div>
           </form>
         </div>
