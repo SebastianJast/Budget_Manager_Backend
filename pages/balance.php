@@ -36,7 +36,7 @@ if (!isset($_SESSION['logged_in'])) {
           <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav flex-lg-row flex-column align-items-center">
               <li class="nav-item px-2">
-                <a href="#" class="nav-link text-white" aria-current="page">Strona główna</a>
+                <a href="main_page.php" class="nav-link text-white" aria-current="page">Strona główna</a>
               </li>
               <li class="nav-item px-2">
                 <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>
@@ -45,7 +45,7 @@ if (!isset($_SESSION['logged_in'])) {
                 <a href="#" class="nav-link text-white">Dodaj wydatek</a>
               </li>
               <li class="nav-item px-2">
-                <a href="#" class="nav-link text-white">Przeglądaj bilans</a>
+                <a href="balance.php" class="nav-link text-white">Przeglądaj bilans</a>
               </li>
               <li class="nav-item px-2">
                 <a href="#" class="nav-link text-white">Ustawienia</a>
