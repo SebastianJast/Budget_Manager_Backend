@@ -52,7 +52,7 @@ try {
 
                     unset($_SESSION['error']);
                     $result->free_result();
-                    header('Location: balance.php');
+                    header('Location: main_page.php');
 
                 } else {
                     $_SESSION['error'] = '<span style="color:red">Nieprawidłowy login lub hasło!</span>';
