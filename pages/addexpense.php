@@ -20,11 +20,11 @@ try {
 
       $category = $_POST['category'];
       $amount = $_POST['amount'];
-      $method = $_POST['method'];
+      $pay_method = $_POST['pay_method'];
 
       if (!is_numeric($amount) || $amount <= 0) {
         $_SESSION['e_amount'] = "Kwota musi być liczbą dodatnią!";
-        header("Location: addincome.php");
+        header("Location: addexpense.php");
         exit();
       }
 
@@ -40,20 +40,31 @@ try {
 
       $id = $_SESSION['id'];
 
-      $result = $connect->query("SELECT id FROM incomes_category_assigned_to_users WHERE name = '$category'");
-      if ($result === false) {
+      $result_category = $connect->query("SELECT id FROM expenses_category_assigned_to_users WHERE name = '$category'");
+      if ($result_category === false) {
         throw new Exception($connect->error);
       }
 
-      $category_id = $result->fetch_assoc()['id'];
+      $category_id = $result_category->fetch_assoc()['id'];
       if ($category_id === null) {
         echo "Błąd: kategoria nie została znaleziona";
         exit();
       }
 
-      if ($connect->query("INSERT INTO expenses VALUES (NULL, '$id', '$category_id','$method' ,'$amount', '$format_date', '$comment')")) {
+      $result_method = $connect->query("SELECT id FROM payment_methods_assigned_to_users WHERE name = '$pay_method'");
+      if ($result_method === false) {
+        throw new Exception($connect->error);
+      }
+
+      $method_id = $result_method->fetch_assoc()['id'];
+      if ($method_id === null) {
+        echo "Błąd: metoda nie została znaleziona";
+        exit();
+      }
+
+      if ($connect->query("INSERT INTO expenses VALUES (NULL, '$id', '$category_id','$method_id' ,'$amount', '$format_date', '$comment')")) {
         $_SESSION['successful_addexpense'] = true;
-        header('Location: addincome_success.php');
+        header('Location: addexpense_success.php');
       } else {
         throw new Exception($connect->error);
       }
@@ -125,14 +136,23 @@ try {
             height="500" loading="lazy" />
         </div>
         <div class="container col-12 col-sm-12 col-lg-6">
-          <form class="w-100">
+          <form class="w-100" method="post">
             <h1 class="h1 mb-3 fw-bold text-white">Wprowadź dane</h1>
             <div class="form-floating my-4">
-              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" name="amount" required />
+              <input type="number" class="form-control" id="floatingInput" placeholder="Wprowadź kwotę" name="amount"
+                required />
               <label for="floatingInput">Kwota</label>
             </div>
+            <?php
+
+            if (isset($_SESSION['e_amount'])) {
+              echo '<div class="error">' . $_SESSION['e_amount'] . '</div>';
+              unset($_SESSION['e_amount']);
+            }
+
+            ?>
             <div class="form-floating my-4">
-              <input type="date" class="form-control" id="dateInput" name="data" required />
+              <input type="date" class="form-control" id="dateInput" name="date" required />
               <label for="dateInput">Data</label>
             </div>
             <div class="form-floating my-4">
@@ -167,7 +187,7 @@ try {
               <label for="categorySelect">Kategoria</label>
             </div>
             <div class="form-floating my-4">
-              <select id="categorySelect" class="form-control" name="method"required>
+              <select id="categorySelect" class="form-control" name="pay_method" required>
                 <option value="">-- Wybierz metodę --</option>
                 <?php
                 require_once "connect.php";
@@ -198,7 +218,7 @@ try {
               <label for="categorySelect">Metoda płatności</label>
             </div>
             <div class="form-floating my-4">
-              <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" />
+              <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" name="comment" />
               <label for="commentInput">Komentarz</label>
             </div>
             <div class="container d-flex gap-5 px-0">
