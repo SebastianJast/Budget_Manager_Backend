@@ -20,10 +20,11 @@ try {
 
       $category = $_POST['category'];
       $amount = $_POST['amount'];
+      $pay_method = $_POST['pay_method'];
 
       if (!is_numeric($amount) || $amount <= 0) {
         $_SESSION['e_amount'] = "Kwota musi być liczbą dodatnią!";
-        header("Location: addincome.php");
+        header("Location: addexpense.php");
         exit();
       }
 
@@ -39,20 +40,31 @@ try {
 
       $id = $_SESSION['id'];
 
-      $result = $connect->query("SELECT id FROM incomes_category_assigned_to_users WHERE name = '$category'");
-      if ($result === false) {
+      $result_category = $connect->query("SELECT id FROM expenses_category_assigned_to_users WHERE name = '$category'");
+      if ($result_category === false) {
         throw new Exception($connect->error);
       }
 
-      $category_id = $result->fetch_assoc()['id'];
+      $category_id = $result_category->fetch_assoc()['id'];
       if ($category_id === null) {
         echo "Błąd: kategoria nie została znaleziona";
         exit();
       }
 
-      if ($connect->query("INSERT INTO incomes VALUES (NULL, '$id', '$category_id', '$amount', '$format_date', '$comment')")) {
-        $_SESSION['successful_addincome'] = true;
-        header('Location: addincome_success.php');
+      $result_method = $connect->query("SELECT id FROM payment_methods_assigned_to_users WHERE name = '$pay_method'");
+      if ($result_method === false) {
+        throw new Exception($connect->error);
+      }
+
+      $method_id = $result_method->fetch_assoc()['id'];
+      if ($method_id === null) {
+        echo "Błąd: metoda płatności nie została znaleziona";
+        exit();
+      }
+
+      if ($connect->query("INSERT INTO expenses VALUES (NULL, '$id', '$category_id','$method_id' ,'$amount', '$format_date', '$comment')")) {
+        $_SESSION['successful_addexpense'] = true;
+        header('Location: addexpense_success.php');
       } else {
         throw new Exception($connect->error);
       }
@@ -93,7 +105,7 @@ try {
           <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav flex-lg-row flex-column align-items-center">
               <li class="nav-item px-2">
-                <a href="main_page.php" class="nav-link text-white" aria-current="page">Strona główna</a>
+                <a href="#" class="nav-link text-white" aria-current="page">Strona główna</a>
               </li>
               <li class="nav-item px-2">
                 <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>
@@ -159,7 +171,7 @@ try {
 
                     $id = $_SESSION["id"];
 
-                    $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users WHERE user_id ='$id'");
+                    $result = $connect->query("SELECT name FROM expenses_category_assigned_to_users WHERE user_id ='$id'");
 
                     while ($category = $result->fetch_assoc()) {
                       echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
@@ -172,9 +184,39 @@ try {
                 }
                 ?>
               </select>
-              <label for=" categorySelect">Kategoria</label>
+              <label for="categorySelect">Kategoria</label>
             </div>
+            <div class="form-floating my-4">
+              <select id="categorySelect" class="form-control" name="pay_method" required>
+                <option value="">-- Wybierz metodę --</option>
+                <?php
+                require_once "connect.php";
+                mysqli_report(MYSQLI_REPORT_STRICT);
 
+                try {
+                  $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                  if ($connect->connect_errno != 0) {
+                    throw new Exception(mysqli_connect_error());
+                  } else {
+
+                    $id = $_SESSION["id"];
+
+                    $result = $connect->query("SELECT name FROM payment_methods_assigned_to_users WHERE user_id ='$id'");
+
+                    while ($category = $result->fetch_assoc()) {
+                      echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
+                    }
+
+                    $connect->close();
+                  }
+                } catch (Exception $e) {
+                  echo '<option value="">Błąd ładowania kategorii </option>';
+                }
+                ?>
+              </select>
+              <label for="categorySelect">Metoda płatności</label>
+            </div>
             <div class="form-floating my-4">
               <input type="text" class="form-control" id="commentInput" placeholder="Komentarz" name="comment" />
               <label for="commentInput">Komentarz</label>

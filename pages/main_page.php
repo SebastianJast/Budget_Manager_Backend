@@ -64,7 +64,7 @@ try {
                 <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>
               </li>
               <li class="nav-item px-2">
-                <a href="#" class="nav-link text-white">Dodaj wydatek</a>
+                <a href="addexpense.php" class="nav-link text-white">Dodaj wydatek</a>
               </li>
               <li class="nav-item px-2">
                 <a href="balance.php" class="nav-link text-white">Przeglądaj bilans</a>

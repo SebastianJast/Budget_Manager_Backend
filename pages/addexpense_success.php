@@ -1,11 +1,11 @@
 <?php
 session_start();
 
-if ((!isset($_SESSION['successful_addincome']))) {
-  header('Location: addincome.php');
+if ((!isset($_SESSION['successful_addexpense']))) {
+  header('Location: addexpense.php');
   exit();
 } else {
-  unset($_SESSION['successful_addincome']);
+  unset($_SESSION['successful_addexpense']);
 }
 
 if (isset($_SESSION['e_amount']))
@@ -63,7 +63,7 @@ if (isset($_SESSION['e_amount']))
     </div>
   </header>
   <main>
-    <h2 class="fw-bold mb-5 text-center mt-5 text-success">Przychód został dodany!</h2>
+    <h2 class="fw-bold mb-5 text-center mt-5 text-success">Wydatek został dodany!</h2>
   </main>
   <div class="container">
     <footer class="d-flex flex-wrap justify-content-between align-items-center py-1 my-5 border-top fixed-bottom">

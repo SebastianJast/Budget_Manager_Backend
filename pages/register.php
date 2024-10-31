@@ -4,10 +4,13 @@ session_start();
 
 if (isset($_POST['email'])) {
 
+  //Udana walidacja
   $everything_is_OK = true;
 
+  //Sprawdź poprawność loginu
   $login = $_POST['login'];
 
+  //Sprawdzenie długości nicka
   if ((strlen($login) < 3) || (strlen($login) > 20)) {
     $everything_is_OK = false;
     $_SESSION['e_login'] = "Login musi posiadać od 3 do 20 znaków!";
@@ -18,14 +21,17 @@ if (isset($_POST['email'])) {
     $_SESSION['e_login'] = "Login może składać się tylko z liter i cyfr (bez polskich znalów)";
   }
 
+  //Sprawdź poprawność adresu email
   $email = $_POST['email'];
   $emailB = filter_var($email, FILTER_SANITIZE_EMAIL);
+
 
   if ((filter_var($emailB, FILTER_VALIDATE_EMAIL) == false) || ($emailB != $email)) {
     $everything_is_OK = false;
     $_SESSION['e_email'] = "Podaj poprawny adres e-mail";
   }
 
+  //Sprawdź poprawność hasła
   $password1 = $_POST['password1'];
   $password2 = $_POST['password2'];
 
@@ -41,11 +47,13 @@ if (isset($_POST['email'])) {
 
   $password_hash = password_hash($password1, PASSWORD_DEFAULT);
 
+  //Czy zaakceptowano regulamin
   if (!isset($_POST['terms'])) {
     $everything_is_OK = false;
     $_SESSION['e_terms'] = "Potwierdż akceptację regulaminu!";
   }
 
+  //Recaptcha
   $secret = "6LdJi1kqAAAAALo14d7EN0pfpyyUKObNwTKSRQK1";
 
   $check = file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret=' . $secret . '&response=' . $_POST['g-recaptcha-response']);
@@ -56,6 +64,7 @@ if (isset($_POST['email'])) {
     $_SESSION['e_bot'] = "Potwierdź, że nie jesteś botem!";
   }
 
+  //Zapamiętaj wprowadzone dane
   $_SESSION['fr_login'] = $login;
   $_SESSION['fr_email'] = $email;
   $_SESSION['fr_password1'] = $password1;
@@ -64,7 +73,6 @@ if (isset($_POST['email'])) {
     $_SESSION['fr_terms'] = true;
 
   require_once "connect.php";
-
   mysqli_report(MYSQLI_REPORT_STRICT);
 
   try {
@@ -73,20 +81,24 @@ if (isset($_POST['email'])) {
       throw new Exception(mysqli_connect_error());
 
     } else {
+      // Czy email już istnieje ?
       $result = $connect->query("SELECT id FROM users WHERE email='$email'");
 
-      if (!$result)
+      if (!$result) {
         throw new Exception($connect->error);
+      }
       $how_many_emails = $result->num_rows;
       if ($how_many_emails > 0) {
         $everything_is_OK = false;
         $_SESSION['e_email'] = "Istnieje już konto przypisane do tego adresu email";
       }
 
+      //Czy nick jest zarezerwowwny?
       $result = $connect->query("SELECT id FROM users WHERE username='$login'");
 
-      if (!$result)
+      if (!$result) {
         throw new Exception($connect->error);
+      }
       $how_many_login = $result->num_rows;
       if ($how_many_login > 0) {
         $everything_is_OK = false;
@@ -94,16 +106,33 @@ if (isset($_POST['email'])) {
       }
 
       if ($everything_is_OK == true) {
-        if ($connect->query("INSERT INTO users VALUES (NULL, '$login', '$password_hash', '$email')")) {
-          $new_user_id = $connect->insert_id;
-          if (!$connect->query("INSERT INTO incomes_category_assigned_to_users (user_id, name) SELECT '$new_user_id', name FROM incomes_category_default")) {
-            throw new Exception($connect->error);
-          }
-          $_SESSION['successful_registration'] = true;
-          header('Location: welcome.php');
-        } else {
+
+        //Jeśli wszystko jest okey (true) dodajemy użytkownka do bazy danych
+
+        $result = $connect->query("INSERT INTO users VALUES (NULL, '$login', '$password_hash', '$email')");
+
+        if (!$result) {
           throw new Exception($connect->error);
         }
+
+        $new_user_id = $connect->insert_id;
+
+        // Kopiujemy dane z tabeli default do tabeli users
+
+        $table_users = array ("incomes_category_assigned_to_users", "payment_methods_assigned_to_users", "payment_methods_default");
+
+        $table_default = array ("incomes_category_default", "payment_methods_default", "expenses_category_default");
+
+        for ($i=0; $i<=3; $i++) {
+          $result = $connect->query("INSERT INTO '$table_users[$i]' SELECT '$new_user_id', name FROM '$_table_default'");
+          if (!$result) {
+            throw new Exception($connect->error);
+          }
+        } 
+
+        $_SESSION['successful_registration'] = true;
+        header('Location: welcome.php');
+
       }
 
       $connect->close();
