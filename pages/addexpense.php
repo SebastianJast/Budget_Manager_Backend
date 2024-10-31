@@ -58,7 +58,7 @@ try {
 
       $method_id = $result_method->fetch_assoc()['id'];
       if ($method_id === null) {
-        echo "Błąd: metoda nie została znaleziona";
+        echo "Błąd: metoda płatności nie została znaleziona";
         exit();
       }
 
