@@ -93,7 +93,7 @@ if (isset($_POST['email'])) {
         $_SESSION['e_email'] = "Istnieje już konto przypisane do tego adresu email";
       }
 
-      //Czy nick jest zarezerwowwny?
+      //Czy nick jest zarezerwowany?
       $result = $connect->query("SELECT id FROM users WHERE username='$login'");
 
       if (!$result) {
@@ -119,12 +119,12 @@ if (isset($_POST['email'])) {
 
         // Kopiujemy dane z tabeli default do tabeli users
 
-        $table_users = array ("incomes_category_assigned_to_users", "payment_methods_assigned_to_users", "payment_methods_default");
+        $table_users = array ("incomes_category_assigned_to_users", "payment_methods_assigned_to_users", "expenses_category_assigned_to_users");
 
         $table_default = array ("incomes_category_default", "payment_methods_default", "expenses_category_default");
 
-        for ($i=0; $i<=3; $i++) {
-          $result = $connect->query("INSERT INTO '$table_users[$i]' SELECT '$new_user_id', name FROM '$_table_default'");
+        for ($i=0; $i < count($table_default); $i++) {
+          $result = $connect->query("INSERT INTO {$table_users[$i]} (user_id, name) SELECT '$new_user_id', name FROM {$table_default[$i]}");
           if (!$result) {
             throw new Exception($connect->error);
           }
