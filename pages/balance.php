@@ -7,10 +7,6 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
-
-
-
-
 ?>
 
 <!DOCTYPE html>
@@ -89,24 +85,35 @@ if (!isset($_SESSION['logged_in'])) {
           </div>
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-              <li class="fw-bold py-2">Wynagrodzenie: 5000</li>
-              <li>
-                2024-09-28 5000 wypłata
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Sprzedaż na Allegro: 2000</li>
-              <li>
-                2024-09-28 2000 Rower
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Odsetki bankowe: 300</li>
-              <li>
-                2024-09-28 300 lokata
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
+              <?php
+              require_once "connect.php";
+              mysqli_report(MYSQLI_REPORT_STRICT);
+
+              try {
+                $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                if ($connect->connect_errno != 0) {
+                  throw new Exception(mysqli_connect_error());
+                } else {
+
+                  $id = $_SESSION["id"];
+
+                  $result = $connect->query("SELECT incomes.amount, incomes.date_of_income, incomes.income_comment, incomes_category_assigned_to_users.name AS 'category' FROM incomes
+                    INNER JOIN incomes_category_assigned_to_users ON incomes_category_assigned_to_users.user_id = incomes.user_id
+                    WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id AND incomes.user_id = '$id'");
+
+                  while ($row = $result->fetch_assoc()) {
+                    echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . $row['amount'] . '</li>';
+                    echo '<li>' . $row['date_of_income'] . ' ' . $row['income_comment'] . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
+                  }
+
+                  $connect->close();
+                }
+              } catch (Exception $e) {
+                echo '<option value="">Błąd ładowania przychodu </option>';
+              }
+              ?>
             </ul>
           </div>
         </div>
