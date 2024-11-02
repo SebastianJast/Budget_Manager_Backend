@@ -103,8 +103,8 @@ if (!isset($_SESSION['logged_in'])) {
                     WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id AND incomes.user_id = '$id'");
 
                   while ($row = $result->fetch_assoc()) {
-                    echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . $row['amount'] . '</li>';
-                    echo '<li>' . $row['date_of_income'] . ' ' . $row['income_comment'] . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
+                    echo '<li>' . $row['date_of_income'] . ' ' . $row['income_comment'] .  ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
                     class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
                   }
 
@@ -125,30 +125,35 @@ if (!isset($_SESSION['logged_in'])) {
           </div>
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-              <li class="fw-bold py-2">Ubranie: 500</li>
-              <li>
-                2024-09-28 500 kurtka zimowa
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Wycieczka: 400</li>
-              <li>
-                2024-09-28 400
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Jedzenie: 300</li>
-              <li>
-                2024-09-28 300
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Rozrywka: 200</li>
-              <li>
-                2024-09-28 200 Wyjazd na narty
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
+            <?php
+              require_once "connect.php";
+              mysqli_report(MYSQLI_REPORT_STRICT);
+
+              try {
+                $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                if ($connect->connect_errno != 0) {
+                  throw new Exception(mysqli_connect_error());
+                } else {
+
+                  $id = $_SESSION["id"];
+
+                  $result = $connect->query("SELECT expenses.amount, expenses.date_of_expense, expenses.expense_comment, expenses_category_assigned_to_users.name AS 'category' FROM expenses
+                    INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
+                    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.user_id = '$id'");
+
+                  while ($row = $result->fetch_assoc()) {
+                    echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
+                    echo '<li>' . $row['date_of_expense'] . ' ' . $row['expense_comment'] .  ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
+                  }
+
+                  $connect->close();
+                }
+              } catch (Exception $e) {
+                echo '<option value="">Błąd ładowania wydatku </option>';
+              }
+              ?>
             </ul>
           </div>
         </div>
