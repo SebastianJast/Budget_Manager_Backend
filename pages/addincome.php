@@ -160,6 +160,9 @@ try {
                     $id = $_SESSION["id"];
 
                     $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users WHERE user_id ='$id'");
+                    if($result === false) {
+                      throw new Exception($connect->error);
+                    }
 
                     while ($row = $result->fetch_assoc()) {
                       echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';

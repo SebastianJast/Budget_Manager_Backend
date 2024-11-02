@@ -104,7 +104,7 @@ if (!isset($_SESSION['logged_in'])) {
 
                   while ($row = $result->fetch_assoc()) {
                     echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
-                    echo '<li>' . $row['date_of_income'] . ' ' . $row['income_comment'] .  ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    echo '<li>' . $row['date_of_income'] . ' ' . $row['income_comment'] . ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
                     class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
                   }
 
@@ -125,7 +125,7 @@ if (!isset($_SESSION['logged_in'])) {
           </div>
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-            <?php
+              <?php
               require_once "connect.php";
               mysqli_report(MYSQLI_REPORT_STRICT);
 
@@ -144,7 +144,7 @@ if (!isset($_SESSION['logged_in'])) {
 
                   while ($row = $result->fetch_assoc()) {
                     echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
-                    echo '<li>' . $row['date_of_expense'] . ' ' . $row['expense_comment'] .  ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    echo '<li>' . $row['date_of_expense'] . ' ' . $row['expense_comment'] . ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
                     class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
                   }
 
@@ -164,10 +164,60 @@ if (!isset($_SESSION['logged_in'])) {
         <div class="card mb-4 rounded-3 shadow-sm">
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-              <li class="fw-bold py-2">Bilans: 5900</li>
-              <li class="text-success fw-bold">
-                Gratulacje. Świetnie zarządzasz finansami!
-              </li>
+              <?php
+
+              $first_day_month = date('Y-m-01');
+              $last_day_month = date('Y-m-t');
+
+              require_once "connect.php";
+              mysqli_report(MYSQLI_REPORT_STRICT);
+
+              try {
+                $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                if ($connect->connect_errno != 0) {
+                  throw new Exception(mysqli_connect_error());
+                } else {
+
+                  $id = $_SESSION["id"];
+
+                  $result = $connect->query("SELECT incomes.user_id, SUM(incomes.amount) AS 'incomesSUM' FROM incomes
+                  WHERE incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month' AND incomes.user_id = '$id'");
+                  if ($result === false) {
+                    throw new Exception($connect->error);
+                  }
+
+                  $row = $result->fetch_assoc();
+
+                  $incomesSUM = $row['incomesSUM'];
+
+                  $result = $connect->query("SELECT expenses.user_id, SUM(expenses.amount) AS 'expensesSUM' FROM expenses
+                  WHERE expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month' AND expenses.user_id = '$id'");
+                  if ($result === false) {
+                    throw new Exception($connect->error);
+                  }
+
+                  $row = $result->fetch_assoc();
+
+                  $expensesSUM = $row['expensesSUM'];
+
+                  $balance = $incomesSUM - $expensesSUM;
+
+                  echo '<li class="fw-bold py-2">' . 'Bilans: ' . $balance . '</li>';
+
+                  $connect->close();
+                }
+              } catch (Exception $e) {
+                echo '<option value="">Błąd ładowania wydatku </option>';
+              }
+              ?>
+              <?php
+              if ($balance > 0) {
+                echo '<li class="text-success" fw-bold> Gratulacje. Świetnie zarządzasz finansami! </li>';
+              } else {
+                echo '<li class="text-danger" fw-bold> Ostrożnie! Przekroczyłeś budżet – czas na oszczędności </li>';
+              }
+              ?>
             </ul>
           </div>
         </div>

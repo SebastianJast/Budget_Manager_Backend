@@ -105,7 +105,7 @@ try {
           <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav flex-lg-row flex-column align-items-center">
               <li class="nav-item px-2">
-                <a href="#" class="nav-link text-white" aria-current="page">Strona główna</a>
+                <a href="main_page.php" class="nav-link text-white" aria-current="page">Strona główna</a>
               </li>
               <li class="nav-item px-2">
                 <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>
