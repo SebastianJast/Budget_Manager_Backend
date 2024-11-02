@@ -7,6 +7,16 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
+$dataPoints = array(
+  array("label" => "Food + Drinks", "y" => 590),
+  array("label" => "Activities and Entertainments", "y" => 261),
+  array("label" => "Health and Fitness", "y" => 158),
+  array("label" => "Shopping & Misc", "y" => 72),
+  array("label" => "Transportation", "y" => 191),
+  array("label" => "Rent", "y" => 573),
+  array("label" => "Travel Insurance", "y" => 126)
+);
+
 ?>
 
 <!DOCTYPE html>
@@ -20,6 +30,32 @@ if (!isset($_SESSION['logged_in'])) {
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="../css/style.css" />
 </head>
+<script>
+  window.onload = function () {
+
+    var chart = new CanvasJS.Chart("chartContainer", {
+      animationEnabled: true,
+      exportEnabled: true,
+      title: {
+        text: "Average Expense Per Day  in Thai Baht"
+      },
+      subtitles: [{
+        text: "Currency Used: Thai Baht (฿)"
+      }],
+      data: [{
+        type: "pie",
+        showInLegend: "true",
+        legendText: "{label}",
+        indexLabelFontSize: 16,
+        indexLabel: "{label} - #percent%",
+        yValueFormatString: "฿#,##0",
+        dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
+      }]
+    });
+    chart.render();
+
+  }
+</script>
 
 <body>
   <header>
@@ -210,8 +246,7 @@ if (!isset($_SESSION['logged_in'])) {
               } catch (Exception $e) {
                 echo '<option value="">Błąd ładowania wydatku </option>';
               }
-              ?>
-              <?php
+
               if ($balance > 0) {
                 echo '<li class="text-success" fw-bold> Gratulacje. Świetnie zarządzasz finansami! </li>';
               } else {
@@ -224,7 +259,7 @@ if (!isset($_SESSION['logged_in'])) {
       </div>
     </div>
     <div class="mx-auto col-xxl-8 col-md-8 col-sm-12">
-      <div id="chartContainer" style="height: 300px; width: 100%"></div>
+      <div id="chartContainer" style="height: 370px; width: 100%;"></div>
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -279,7 +314,6 @@ if (!isset($_SESSION['logged_in'])) {
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
   <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
-  <script src="../js/index.js"></script>
 </body>
 
 </html>
