@@ -7,16 +7,40 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
-$dataPoints = array(
-  array("label" => "Food + Drinks", "y" => 590),
-  array("label" => "Activities and Entertainments", "y" => 261),
-  array("label" => "Health and Fitness", "y" => 158),
-  array("label" => "Shopping & Misc", "y" => 72),
-  array("label" => "Transportation", "y" => 191),
-  array("label" => "Rent", "y" => 573),
-  array("label" => "Travel Insurance", "y" => 126)
-);
+$first_day_month = date('Y-m-01');
+$last_day_month = date('Y-m-t');
 
+require_once "connect.php";
+mysqli_report(MYSQLI_REPORT_STRICT);
+
+try {
+  $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+  if ($connect->connect_errno != 0) {
+    throw new Exception(mysqli_connect_error());
+  } else {
+
+    $id = $_SESSION["id"];
+
+    $result = $connect->query("SELECT expenses_category_assigned_to_users.name, SUM(expenses.amount) AS 'expensesSUM' FROM expenses
+    INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
+    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.date_of_expense
+    BETWEEN '$first_day_month' AND '$last_day_month'
+    AND expenses.user_id = '$id'
+    GROUP BY expenses.expense_category_assigned_to_user_id
+    ORDER BY expensesSUM DESC");
+
+
+    $dataPoints = array();
+    while ($row = $result->fetch_assoc()) {
+      $dataPoints[] = array("label" => $row['name'], "y" => $row['expensesSUM']);
+    }
+
+    $connect->close();
+  }
+} catch (Exception $e) {
+  echo '<option value="">Błąd ładowania przychodu </option>';
+}
 ?>
 
 <!DOCTYPE html>
@@ -37,10 +61,10 @@ $dataPoints = array(
       animationEnabled: true,
       exportEnabled: true,
       title: {
-        text: "Average Expense Per Day  in Thai Baht"
+        text: "Twoje wydatki z wybranego okresu"
       },
       subtitles: [{
-        text: "Currency Used: Thai Baht (฿)"
+        text: "Używana waluta (PLN)"
       }],
       data: [{
         type: "pie",
@@ -48,7 +72,7 @@ $dataPoints = array(
         legendText: "{label}",
         indexLabelFontSize: 16,
         indexLabel: "{label} - #percent%",
-        yValueFormatString: "฿#,##0",
+        yValueFormatString: "PLN #,##0",
         dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
       }]
     });
