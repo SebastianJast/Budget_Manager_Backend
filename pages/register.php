@@ -21,10 +21,9 @@ if (isset($_POST['email'])) {
     $_SESSION['e_login'] = "Login może składać się tylko z liter i cyfr (bez polskich znalów)";
   }
 
-  //Sprawdź poprawność adresu email
+  //Sprawdź poprawność adresu email\
   $email = $_POST['email'];
   $emailB = filter_var($email, FILTER_SANITIZE_EMAIL);
-
 
   if ((filter_var($emailB, FILTER_VALIDATE_EMAIL) == false) || ($emailB != $email)) {
     $everything_is_OK = false;
@@ -107,7 +106,7 @@ if (isset($_POST['email'])) {
 
       if ($everything_is_OK == true) {
 
-        //Jeśli wszystko jest okey (true) dodajemy użytkownka do bazy danych
+        //Jeśli wszystko jest okey (true) dodajemy użytkownika do bazy danych
 
         $result = $connect->query("INSERT INTO users VALUES (NULL, '$login', '$password_hash', '$email')");
 
@@ -222,6 +221,7 @@ if (isset($_POST['email'])) {
               </label>
             </div>
             <?php
+
             if (isset($_SESSION['e_terms'])) {
               echo '<div class="error">' . $_SESSION['e_terms'] . '</div>';
               unset($_SESSION['e_terms']);
@@ -235,6 +235,7 @@ if (isset($_POST['email'])) {
               echo '<div class="error">' . $_SESSION['e_bot'] . '</div>';
               unset($_SESSION['e_bot']);
             }
+
             ?>
             <br>
             <button class="btn btn-warning w-100 py-3 btn-sign-in text-white" type="submit">
