@@ -40,7 +40,7 @@ try {
 
       $id = $_SESSION['id'];
 
-      $result_category = $connect->query("SELECT id FROM expenses_category_assigned_to_users WHERE name = '$category'");
+      $result_category = $connect->query("SELECT id FROM expenses_category_assigned_to_users WHERE name = '$category' AND user_id = '$id'");
       if ($result_category === false) {
         throw new Exception($connect->error);
       }
@@ -51,7 +51,7 @@ try {
         exit();
       }
 
-      $result_method = $connect->query("SELECT id FROM payment_methods_assigned_to_users WHERE name = '$pay_method'");
+      $result_method = $connect->query("SELECT id FROM payment_methods_assigned_to_users WHERE name = '$pay_method' AND user_id = '$id'");
       if ($result_method === false) {
         throw new Exception($connect->error);
       }
@@ -105,7 +105,7 @@ try {
           <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav flex-lg-row flex-column align-items-center">
               <li class="nav-item px-2">
-                <a href="#" class="nav-link text-white" aria-current="page">Strona główna</a>
+                <a href="main_page.php" class="nav-link text-white" aria-current="page">Strona główna</a>
               </li>
               <li class="nav-item px-2">
                 <a href="addincome.php" class="nav-link text-white">Dodaj przychód</a>

@@ -7,6 +7,81 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
+$first_day_month = date('Y-m-01');
+$last_day_month = date('Y-m-t');
+$title = "Bieżący miesiąc";
+
+
+if (isset($_POST["previous_month"])) {
+  $first_day_month = date('Y-m-d', strtotime('first day of last month'));
+  $last_day_month = date('Y-m-d', strtotime('last day of last month'));
+  $title = "Poprzedni miesiąc";
+}
+
+if (isset($_POST["current_year"])) {
+  $first_day_month = date('Y-01-01');
+  $last_day_month = date('Y-12-t');
+  $title = "Bieżący rok";
+}
+
+if (isset($_POST["submit_date"])) {
+  $date1 = $_POST['range_from'];
+  $dateTime1 = DateTime::createFromFormat('Y-m-d', $date1);
+  if ($dateTime1 === false) {
+    echo "Błąd: Niepoprawny format daty!";
+    exit();
+  }
+  $format_date1 = $dateTime1->format('Y-m-d');
+  $first_day_month = $format_date1;
+
+  $date2 = $_POST['range_to'];
+  $dateTime2 = DateTime::createFromFormat('Y-m-d', $date2);
+  if ($dateTime2 === false) {
+    echo "Błąd: Niepoprawny format daty!";
+    exit();
+  }
+  $format_date2 = $dateTime2->format('Y-m-d');
+  $last_day_month = $format_date2;
+  $title = 'Okres od ' . $first_day_month . ' do ' . $last_day_month;
+
+}
+
+require_once "connect.php";
+mysqli_report(MYSQLI_REPORT_STRICT);
+
+try {
+  $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+  if ($connect->connect_errno != 0) {
+    throw new Exception(mysqli_connect_error());
+  } else {
+
+    $id = $_SESSION["id"];
+
+    $result = $connect->query("SELECT expenses_category_assigned_to_users.name, SUM(expenses.amount) AS 'expensesSUM' FROM expenses
+    INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
+    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.date_of_expense
+    BETWEEN '$first_day_month' AND '$last_day_month'
+    AND expenses.user_id = '$id'
+    GROUP BY expenses.expense_category_assigned_to_user_id
+    ORDER BY expensesSUM DESC");
+
+
+    $dataPoints = array();
+    $how_many_expenses = $result->num_rows;
+    if ($how_many_expenses > 0) {
+      while ($row = $result->fetch_assoc()) {
+        $dataPoints[] = array("label" => $row['name'], "y" => $row['expensesSUM']);
+      }
+    } else {
+      $dataPoints = array(array("label" => "Zero expenses", "y" => 100));
+    }
+
+    $connect->close();
+  }
+} catch (Exception $e) {
+  echo '<option value="">Błąd ładowania przychodu </option>';
+}
 ?>
 
 <!DOCTYPE html>
@@ -20,6 +95,31 @@ if (!isset($_SESSION['logged_in'])) {
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="../css/style.css" />
 </head>
+<script>
+  window.onload = function () {
+
+    var chart = new CanvasJS.Chart("chartContainer", {
+      animationEnabled: true,
+      exportEnabled: true,
+      title: {
+        text: "Twoje wydatki z wybranego okresu"
+      },
+      subtitles: [{
+        text: "Używana waluta (PLN)"
+      }],
+      data: [{
+        type: "pie",
+        showInLegend: "true",
+        legendText: "{label}",
+        indexLabelFontSize: 16,
+        indexLabel: "{label} - #percent%",
+        yValueFormatString: "PLN #,##0",
+        dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
+      }]
+    });
+    chart.render();
+  }
+</script>
 
 <body>
   <header>
@@ -59,11 +159,16 @@ if (!isset($_SESSION['logged_in'])) {
                   Wybierz okres
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <a class="dropdown-item" href="#">Bieżacy miesiąc</a>
-                  <a class="dropdown-item" href="#">Poprzedni miesiąc</a>
-                  <a class="dropdown-item" href="#">Bieżący rok</a>
-                  <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal"
-                    href="#">Niestandardowy</a>
+                  <form action="" method="post">
+                    <button type="submit" class="dropdown-item" name="current_month" value="current_month">Bieżący
+                      miesiąc</button>
+                    <button type="submit" class="dropdown-item" name="previous_month" value="previous_month">Poprzedni
+                      miesiąc</button>
+                    <button type="submit" class="dropdown-item" name="current_year" value="current_year">Bieżący
+                      rok</button>
+                    <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal"
+                      href="#">Niestandardowy</a>
+                  </form>
                 </div>
               </li>
             </ul>
@@ -74,7 +179,7 @@ if (!isset($_SESSION['logged_in'])) {
   </header>
   <main>
     <h2 class="display-5 fw-bold text-white lh-1 mt-4 text-center mb-4">
-      Bieżacy miesiąc
+      <?php echo $title ?>
     </h2>
     <div
       class="row d-flex flex-column flex-lg-row justify-content-center align-items-center gap-4 row-cols-1 row-cols-md-3 mb-3 text-center">
@@ -85,24 +190,35 @@ if (!isset($_SESSION['logged_in'])) {
           </div>
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-              <li class="fw-bold py-2">Wynagrodzenie: 5000</li>
-              <li>
-                2024-09-28 5000 wypłata
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Sprzedaż na Allegro: 2000</li>
-              <li>
-                2024-09-28 2000 Rower
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Odsetki bankowe: 300</li>
-              <li>
-                2024-09-28 300 lokata
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
+              <?php
+              require_once "connect.php";
+              mysqli_report(MYSQLI_REPORT_STRICT);
+
+              try {
+                $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                if ($connect->connect_errno != 0) {
+                  throw new Exception(mysqli_connect_error());
+                } else {
+
+                  $id = $_SESSION["id"];
+
+                  $result = $connect->query("SELECT incomes.amount, incomes.date_of_income, incomes.income_comment, incomes_category_assigned_to_users.name AS 'category' FROM incomes
+                    INNER JOIN incomes_category_assigned_to_users ON incomes_category_assigned_to_users.user_id = incomes.user_id
+                    WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id AND incomes.user_id = '$id' AND incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month'");
+
+                  while ($row = $result->fetch_assoc()) {
+                    echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
+                    echo '<li>' . $row['date_of_income'] . ' ' . $row['income_comment'] . ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
+                  }
+
+                  $connect->close();
+                }
+              } catch (Exception $e) {
+                echo '<option value="">Błąd ładowania przychodu </option>';
+              }
+              ?>
             </ul>
           </div>
         </div>
@@ -114,30 +230,35 @@ if (!isset($_SESSION['logged_in'])) {
           </div>
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-              <li class="fw-bold py-2">Ubranie: 500</li>
-              <li>
-                2024-09-28 500 kurtka zimowa
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Wycieczka: 400</li>
-              <li>
-                2024-09-28 400
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Jedzenie: 300</li>
-              <li>
-                2024-09-28 300
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
-              <li class="fw-bold py-2">Rozrywka: 200</li>
-              <li>
-                2024-09-28 200 Wyjazd na narty
-                <span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
-                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>
-              </li>
+              <?php
+              require_once "connect.php";
+              mysqli_report(MYSQLI_REPORT_STRICT);
+
+              try {
+                $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                if ($connect->connect_errno != 0) {
+                  throw new Exception(mysqli_connect_error());
+                } else {
+
+                  $id = $_SESSION["id"];
+
+                  $result = $connect->query("SELECT expenses.amount, expenses.date_of_expense, expenses.expense_comment, expenses_category_assigned_to_users.name AS 'category' FROM expenses
+                    INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
+                    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.user_id = '$id' AND expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month'");
+
+                  while ($row = $result->fetch_assoc()) {
+                    echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
+                    echo '<li>' . $row['date_of_expense'] . ' ' . $row['expense_comment'] . ' ' . '<span><img class="pen" src="../fonts/pen-solid.svg" alt="pen" height="15" width="15" /></span><span><img
+                    class="trash" src="../fonts/trash-can-solid.svg" alt="trash" height="15" width="15" /></span>' . '</li>';
+                  }
+
+                  $connect->close();
+                }
+              } catch (Exception $e) {
+                echo '<option value="">Błąd ładowania wydatku </option>';
+              }
+              ?>
             </ul>
           </div>
         </div>
@@ -148,17 +269,66 @@ if (!isset($_SESSION['logged_in'])) {
         <div class="card mb-4 rounded-3 shadow-sm">
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
-              <li class="fw-bold py-2">Bilans: 5900</li>
-              <li class="text-success fw-bold">
-                Gratulacje. Świetnie zarządzasz finansami!
-              </li>
+              <?php
+
+              require_once "connect.php";
+              mysqli_report(MYSQLI_REPORT_STRICT);
+
+              try {
+                $connect = new mysqli($host, $db_user, $db_password, $db_name);
+
+                if ($connect->connect_errno != 0) {
+                  throw new Exception(mysqli_connect_error());
+                } else {
+
+                  $id = $_SESSION["id"];
+
+                  $result = $connect->query("SELECT incomes.user_id, SUM(incomes.amount) AS 'incomesSUM' FROM incomes
+                  WHERE incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month' AND incomes.user_id = '$id'");
+                  if ($result === false) {
+                    throw new Exception($connect->error);
+                  }
+
+                  $row = $result->fetch_assoc();
+
+                  $incomesSUM = $row['incomesSUM'];
+
+                  $result = $connect->query("SELECT expenses.user_id, SUM(expenses.amount) AS 'expensesSUM' FROM expenses
+                  WHERE expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month' AND expenses.user_id = '$id'");
+                  if ($result === false) {
+                    throw new Exception($connect->error);
+                  }
+
+                  $row = $result->fetch_assoc();
+
+                  $expensesSUM = $row['expensesSUM'];
+
+                  $balance = $incomesSUM - $expensesSUM;
+
+                  echo '<li class="fw-bold py-2">' . 'Bilans: ' . $balance . '</li>';
+
+                  $connect->close();
+                }
+              } catch (Exception $e) {
+                echo '<option value="">Błąd ładowania wydatku </option>';
+              }
+
+              if ($balance > 0) {
+                echo '<li class="text-success" fw-bold> Gratulacje. Świetnie zarządzasz finansami! </li>';
+              } elseif ($balance == 0) {
+                echo '<li class="text-warning" fw-bold> Bilans wynosi zero - warto przemyśleć oszczędności. </li>';
+              } else {
+                echo '<li class="text-danger" fw-bold> Ostrożnie! Przekroczyłeś budżet – czas na oszczędności </li>';
+              }
+
+              ?>
             </ul>
           </div>
         </div>
       </div>
     </div>
     <div class="mx-auto col-xxl-8 col-md-8 col-sm-12">
-      <div id="chartContainer" style="height: 300px; width: 100%"></div>
+      <div id="chartContainer" style="height: 370px; width: 100%;"></div>
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -167,26 +337,28 @@ if (!isset($_SESSION['logged_in'])) {
             <h5 class="modal-title" id="exampleModalLabel">Wybierz zakres dat:</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            <p class="my-2">Zakres od:</p>
-            <div class="form-floating my-1">
-              <input type="date" class="form-control" id="dateInput" required />
-              <label for="dateInput">Data</label>
+          <form method="post">
+            <div class="modal-body">
+              <p class="my-2">Zakres od:</p>
+              <div class="form-floating my-1">
+                <input type="date" class="form-control" id="dateInput" name="range_from" required />
+                <label for="dateInput">Data</label>
+              </div>
+              <p class="my-2">Zakres do:</p>
+              <div class="form-floating my-1">
+                <input type="date" class="form-control" id="dateInput" name="range_to" required />
+                <label for="dateInput">Data</label>
+              </div>
             </div>
-            <p class="my-2">Zakres do:</p>
-            <div class="form-floating my-1">
-              <input type="date" class="form-control" id="dateInput" required />
-              <label for="dateInput">Data</label>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Close
+              </button>
+              <button type="submit" class="btn btn-primary" name="submit_date">
+                Ok
+              </button>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              Close
-            </button>
-            <button type="button" class="btn btn-primary">
-              Ok
-            </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
