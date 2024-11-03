@@ -7,6 +7,7 @@ if (!isset($_SESSION['logged_in'])) {
   exit();
 }
 
+//okres przychodów i wydatków
 $first_day_month = date('Y-m-01');
 $last_day_month = date('Y-m-t');
 $title = "Bieżący miesiąc";
@@ -58,14 +59,17 @@ try {
 
     $id = $_SESSION["id"];
 
+    // suma wydatków w zależności od zakresu daty i kategorii
     $result = $connect->query("SELECT expenses_category_assigned_to_users.name, SUM(expenses.amount) AS 'expensesSUM' FROM expenses
     INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
-    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.date_of_expense
-    BETWEEN '$first_day_month' AND '$last_day_month'
+    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id 
+    AND expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month'
     AND expenses.user_id = '$id'
     GROUP BY expenses.expense_category_assigned_to_user_id
     ORDER BY expensesSUM DESC");
-
+    if ($result === false) {
+      throw new Exception($connect->error);
+    }
 
     $dataPoints = array();
     $how_many_expenses = $result->num_rows;
@@ -80,8 +84,9 @@ try {
     $connect->close();
   }
 } catch (Exception $e) {
-  echo '<option value="">Błąd ładowania przychodu </option>';
+  echo '<option>Błąd ładowania wydatku </option>';
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -95,6 +100,8 @@ try {
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="../css/style.css" />
 </head>
+
+<!-- wykres wydaków w js -->
 <script>
   window.onload = function () {
 
@@ -119,6 +126,7 @@ try {
     });
     chart.render();
   }
+
 </script>
 
 <body>
@@ -191,6 +199,7 @@ try {
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
               <?php
+
               require_once "connect.php";
               mysqli_report(MYSQLI_REPORT_STRICT);
 
@@ -203,9 +212,15 @@ try {
 
                   $id = $_SESSION["id"];
 
+                  //wybierz przychód w zależności od zakresu daty
                   $result = $connect->query("SELECT incomes.amount, incomes.date_of_income, incomes.income_comment, incomes_category_assigned_to_users.name AS 'category' FROM incomes
                     INNER JOIN incomes_category_assigned_to_users ON incomes_category_assigned_to_users.user_id = incomes.user_id
-                    WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id AND incomes.user_id = '$id' AND incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month'");
+                    WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id 
+                    AND incomes.user_id = '$id' 
+                    AND incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month'");
+                  if ($result === false) {
+                    throw new Exception($connect->error);
+                  }
 
                   while ($row = $result->fetch_assoc()) {
                     echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
@@ -231,6 +246,7 @@ try {
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
               <?php
+
               require_once "connect.php";
               mysqli_report(MYSQLI_REPORT_STRICT);
 
@@ -243,9 +259,15 @@ try {
 
                   $id = $_SESSION["id"];
 
+                  //wybierz wydatek w zależności od zakresu daty
                   $result = $connect->query("SELECT expenses.amount, expenses.date_of_expense, expenses.expense_comment, expenses_category_assigned_to_users.name AS 'category' FROM expenses
                     INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
-                    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.user_id = '$id' AND expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month'");
+                    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id 
+                    AND expenses.user_id = '$id' 
+                    AND expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month'");
+                  if ($result === false) {
+                    throw new Exception($connect->error);
+                  }
 
                   while ($row = $result->fetch_assoc()) {
                     echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
@@ -283,6 +305,7 @@ try {
 
                   $id = $_SESSION["id"];
 
+                  //suma przychodów w zależności od zakresu daty
                   $result = $connect->query("SELECT incomes.user_id, SUM(incomes.amount) AS 'incomesSUM' FROM incomes
                   WHERE incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month' AND incomes.user_id = '$id'");
                   if ($result === false) {
@@ -293,6 +316,7 @@ try {
 
                   $incomesSUM = $row['incomesSUM'];
 
+                  //suma wydatków w zależności od zakresu daty
                   $result = $connect->query("SELECT expenses.user_id, SUM(expenses.amount) AS 'expensesSUM' FROM expenses
                   WHERE expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month' AND expenses.user_id = '$id'");
                   if ($result === false) {
