@@ -60,7 +60,7 @@ if ((isset($_SESSION['logged_in'])) && ($_SESSION['logged_in'] == true)) {
               <input class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault"
                 name="remember_me" />
               <label class="form-check-label text-white" for="flexCheckDefault">
-                Remember me
+                Zapamiętaj mnie
               </label>
             </div>
             <button class="btn btn-success w-100 py-3 btn-sign-in" type="submit">
@@ -95,4 +95,4 @@ if ((isset($_SESSION['logged_in'])) && ($_SESSION['logged_in'] == true)) {
     crossorigin="anonymous"></script>
 </body>
 
-</html>
+</html>1
