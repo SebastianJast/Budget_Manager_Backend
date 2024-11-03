@@ -8,6 +8,7 @@ if ((!isset($_SESSION['successful_addincome']))) {
   unset($_SESSION['successful_addincome']);
 }
 
+// Usuwanie błędów rejestracji
 if (isset($_SESSION['e_amount']))
   unset($_SESSION['e_amount']);
 ?>
@@ -15,6 +16,7 @@ if (isset($_SESSION['e_amount']))
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

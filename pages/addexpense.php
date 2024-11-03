@@ -40,6 +40,7 @@ try {
 
       $id = $_SESSION['id'];
 
+      //wybieramy id z expenses_category_assigned_to_users
       $result_category = $connect->query("SELECT id FROM expenses_category_assigned_to_users WHERE name = '$category' AND user_id = '$id'");
       if ($result_category === false) {
         throw new Exception($connect->error);
@@ -51,6 +52,7 @@ try {
         exit();
       }
 
+      //wybieramy id z payment_methods_assigned_to_users
       $result_method = $connect->query("SELECT id FROM payment_methods_assigned_to_users WHERE name = '$pay_method' AND user_id = '$id'");
       if ($result_method === false) {
         throw new Exception($connect->error);
@@ -62,6 +64,7 @@ try {
         exit();
       }
 
+      // dodajemy wydatek
       if ($connect->query("INSERT INTO expenses VALUES (NULL, '$id', '$category_id','$method_id' ,'$amount', '$format_date', '$comment')")) {
         $_SESSION['successful_addexpense'] = true;
         header('Location: addexpense_success.php');
@@ -159,6 +162,7 @@ try {
               <select id="categorySelect" class="form-control" name="category" required>
                 <option value="">-- Wybierz kategorię --</option>
                 <?php
+
                 require_once "connect.php";
                 mysqli_report(MYSQLI_REPORT_STRICT);
 
@@ -171,7 +175,11 @@ try {
 
                     $id = $_SESSION["id"];
 
+                    //wybieramy nazwy kategorii z expenses_category_assigned_to_users
                     $result = $connect->query("SELECT name FROM expenses_category_assigned_to_users WHERE user_id ='$id'");
+                    if ($result === false) {
+                      throw new Exception($connect->error);
+                    }
 
                     while ($category = $result->fetch_assoc()) {
                       echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
@@ -180,8 +188,9 @@ try {
                     $connect->close();
                   }
                 } catch (Exception $e) {
-                  echo '<option value="">Błąd ładowania kategorii </option>';
+                  echo '<option>Błąd ładowania kategorii </option>';
                 }
+
                 ?>
               </select>
               <label for="categorySelect">Kategoria</label>
@@ -190,6 +199,7 @@ try {
               <select id="categorySelect" class="form-control" name="pay_method" required>
                 <option value="">-- Wybierz metodę --</option>
                 <?php
+
                 require_once "connect.php";
                 mysqli_report(MYSQLI_REPORT_STRICT);
 
@@ -202,7 +212,11 @@ try {
 
                     $id = $_SESSION["id"];
 
+                    //wybieramy nazwy kategorii z payment_methods_assigned_to_users
                     $result = $connect->query("SELECT name FROM payment_methods_assigned_to_users WHERE user_id ='$id'");
+                    if ($result === false) {
+                      throw new Exception($connect->error);
+                    }
 
                     while ($category = $result->fetch_assoc()) {
                       echo '<option value="' . $category['name'] . '">' . $category['name'] . '</option>';
@@ -211,8 +225,9 @@ try {
                     $connect->close();
                   }
                 } catch (Exception $e) {
-                  echo '<option value="">Błąd ładowania kategorii </option>';
+                  echo '<option>Błąd ładowania kategorii </option>';
                 }
+
                 ?>
               </select>
               <label for="categorySelect">Metoda płatności</label>

@@ -10,6 +10,7 @@ if (!isset($_SESSION['logged_in'])) {
 require_once "connect.php";
 mysqli_report(MYSQLI_REPORT_STRICT);
 
+//jaki username ma zalogowany użytkownik
 try {
   $connect = new mysqli($host, $db_user, $db_password, $db_name);
   if ($connect->connect_errno != 0) {

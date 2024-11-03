@@ -39,6 +39,7 @@ try {
 
       $id = $_SESSION['id'];
 
+      //wybieramy id z incomes_category_assigned_to_users
       $result = $connect->query("SELECT id FROM incomes_category_assigned_to_users WHERE name = '$category' AND user_id = '$id'");
       if ($result === false) {
         throw new Exception($connect->error);
@@ -50,6 +51,7 @@ try {
         exit();
       }
 
+      // dodajemy przychód
       if ($connect->query("INSERT INTO incomes VALUES (NULL, '$id', '$category_id', '$amount', '$format_date', '$comment')")) {
         $_SESSION['successful_addincome'] = true;
         header('Location: addincome_success.php');
@@ -147,6 +149,7 @@ try {
               <select id="categorySelect" class="form-control" name="category" required>
                 <option value="">-- Wybierz kategorię --</option>
                 <?php
+
                 require_once "connect.php";
                 mysqli_report(MYSQLI_REPORT_STRICT);
 
@@ -159,8 +162,9 @@ try {
 
                     $id = $_SESSION["id"];
 
+                    //wybieramy nazwy kategorii z incomes_category_assigned_to_users
                     $result = $connect->query("SELECT name FROM incomes_category_assigned_to_users WHERE user_id ='$id'");
-                    if($result === false) {
+                    if ($result === false) {
                       throw new Exception($connect->error);
                     }
 
@@ -171,8 +175,9 @@ try {
                     $connect->close();
                   }
                 } catch (Exception $e) {
-                  echo '<option value="">Błąd ładowania kategorii </option>';
+                  echo '<option>Błąd ładowania kategorii </option>';
                 }
+
                 ?>
               </select>
               <label for=" categorySelect">Kategoria</label>

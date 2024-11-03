@@ -2,6 +2,7 @@
 
 session_start();
 
+//jeśli nie usatwiono loginu lub hasła 
 if ((!isset($_POST['email'])) || (!isset($_POST['password']))) {
     header('Location: login.php');
     exit();
@@ -21,6 +22,7 @@ try {
 
         $email = htmlentities($email, ENT_QUOTES, "UTF-8");
 
+        //zapamiętywanie loginu i hasła
         if (!empty($_POST['remember_me'])) {
             $remember_me = $_POST['remember_me'];
             setcookie('email', $email, time() + 3600 * 24 * 7);
@@ -30,6 +32,7 @@ try {
             setcookie('password', $password, 30);
         }
 
+        //wybierz wszystkich użytkowników o podanym emailu
         if (
             $result = $connect->query(
                 sprintf(
