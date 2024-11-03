@@ -34,7 +34,7 @@ if ((isset($_SESSION['logged_in'])) && ($_SESSION['logged_in'] == true)) {
             loading="lazy" />
         </div>
         <div class="container col-12 col-sm-12 col-lg-6">
-          <form class="w-100" action="log_in.php" method="post">
+          <form class="w-100 mb-3" action="log_in.php" method="post">
             <h1 class="h1 mb-3 fw-bold text-white">Logowanie</h1>
             <div class="form-floating my-4">
               <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com" name="email"
@@ -67,6 +67,7 @@ if ((isset($_SESSION['logged_in'])) && ($_SESSION['logged_in'] == true)) {
               Logowanie
             </button>
           </form>
+          <a class="text-white" href="register.php">Utwórz nowe konto</a>
         </div>
       </div>
     </div>
