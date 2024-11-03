@@ -9,6 +9,42 @@ if (!isset($_SESSION['logged_in'])) {
 
 $first_day_month = date('Y-m-01');
 $last_day_month = date('Y-m-t');
+$title = "Bieżący miesiąc";
+
+
+if (isset($_POST["previous_month"])) {
+  $first_day_month = date('Y-m-d', strtotime('first day of last month'));
+  $last_day_month = date('Y-m-d', strtotime('last day of last month'));
+  $title = "Poprzedni miesiąc";
+}
+
+if (isset($_POST["current_year"])) {
+  $first_day_month = date('Y-01-01');
+  $last_day_month = date('Y-12-t');
+  $title = "Bieżący rok";
+}
+
+if (isset($_POST["submit_date"])) {
+  $date1 = $_POST['range_from'];
+  $dateTime1 = DateTime::createFromFormat('Y-m-d', $date1);
+  if ($dateTime1 === false) {
+    echo "Błąd: Niepoprawny format daty!";
+    exit();
+  }
+  $format_date1 = $dateTime1->format('Y-m-d');
+  $first_day_month = $format_date1;
+
+  $date2 = $_POST['range_to'];
+  $dateTime2 = DateTime::createFromFormat('Y-m-d', $date2);
+  if ($dateTime2 === false) {
+    echo "Błąd: Niepoprawny format daty!";
+    exit();
+  }
+  $format_date2 = $dateTime2->format('Y-m-d');
+  $last_day_month = $format_date2;
+  $title = 'Okres od ' . $first_day_month . ' do ' . $last_day_month;
+
+}
 
 require_once "connect.php";
 mysqli_report(MYSQLI_REPORT_STRICT);
@@ -32,8 +68,13 @@ try {
 
 
     $dataPoints = array();
-    while ($row = $result->fetch_assoc()) {
-      $dataPoints[] = array("label" => $row['name'], "y" => $row['expensesSUM']);
+    $how_many_expenses = $result->num_rows;
+    if ($how_many_expenses > 0) {
+      while ($row = $result->fetch_assoc()) {
+        $dataPoints[] = array("label" => $row['name'], "y" => $row['expensesSUM']);
+      }
+    } else {
+      $dataPoints = array(array("label" => "Zero expenses", "y" => 100));
     }
 
     $connect->close();
@@ -77,7 +118,6 @@ try {
       }]
     });
     chart.render();
-
   }
 </script>
 
@@ -119,11 +159,16 @@ try {
                   Wybierz okres
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <a class="dropdown-item" href="#">Bieżacy miesiąc</a>
-                  <a class="dropdown-item" href="#">Poprzedni miesiąc</a>
-                  <a class="dropdown-item" href="#">Bieżący rok</a>
-                  <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal"
-                    href="#">Niestandardowy</a>
+                  <form action="" method="post">
+                    <button type="submit" class="dropdown-item" name="current_month" value="current_month">Bieżący
+                      miesiąc</button>
+                    <button type="submit" class="dropdown-item" name="previous_month" value="previous_month">Poprzedni
+                      miesiąc</button>
+                    <button type="submit" class="dropdown-item" name="current_year" value="current_year">Bieżący
+                      rok</button>
+                    <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal"
+                      href="#">Niestandardowy</a>
+                  </form>
                 </div>
               </li>
             </ul>
@@ -134,7 +179,7 @@ try {
   </header>
   <main>
     <h2 class="display-5 fw-bold text-white lh-1 mt-4 text-center mb-4">
-      Bieżacy miesiąc
+      <?php echo $title ?>
     </h2>
     <div
       class="row d-flex flex-column flex-lg-row justify-content-center align-items-center gap-4 row-cols-1 row-cols-md-3 mb-3 text-center">
@@ -160,7 +205,7 @@ try {
 
                   $result = $connect->query("SELECT incomes.amount, incomes.date_of_income, incomes.income_comment, incomes_category_assigned_to_users.name AS 'category' FROM incomes
                     INNER JOIN incomes_category_assigned_to_users ON incomes_category_assigned_to_users.user_id = incomes.user_id
-                    WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id AND incomes.user_id = '$id'");
+                    WHERE incomes.income_category_assigned_to_user_id = incomes_category_assigned_to_users.id AND incomes.user_id = '$id' AND incomes.date_of_income BETWEEN '$first_day_month' AND '$last_day_month'");
 
                   while ($row = $result->fetch_assoc()) {
                     echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
@@ -200,7 +245,7 @@ try {
 
                   $result = $connect->query("SELECT expenses.amount, expenses.date_of_expense, expenses.expense_comment, expenses_category_assigned_to_users.name AS 'category' FROM expenses
                     INNER JOIN expenses_category_assigned_to_users ON expenses_category_assigned_to_users.user_id = expenses.user_id
-                    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.user_id = '$id'");
+                    WHERE expenses.expense_category_assigned_to_user_id = expenses_category_assigned_to_users.id AND expenses.user_id = '$id' AND expenses.date_of_expense BETWEEN '$first_day_month' AND '$last_day_month'");
 
                   while ($row = $result->fetch_assoc()) {
                     echo '<li class="fw-bold py-2">' . $row['category'] . ': ' . round($row['amount']) . '</li>';
@@ -225,9 +270,6 @@ try {
           <div class="card-body">
             <ul class="list-unstyled mt-1 mb-4">
               <?php
-
-              $first_day_month = date('Y-m-01');
-              $last_day_month = date('Y-m-t');
 
               require_once "connect.php";
               mysqli_report(MYSQLI_REPORT_STRICT);
@@ -273,9 +315,12 @@ try {
 
               if ($balance > 0) {
                 echo '<li class="text-success" fw-bold> Gratulacje. Świetnie zarządzasz finansami! </li>';
+              } elseif ($balance == 0) {
+                echo '<li class="text-warning" fw-bold> Bilans wynosi zero - warto przemyśleć oszczędności. </li>';
               } else {
                 echo '<li class="text-danger" fw-bold> Ostrożnie! Przekroczyłeś budżet – czas na oszczędności </li>';
               }
+
               ?>
             </ul>
           </div>
@@ -292,26 +337,28 @@ try {
             <h5 class="modal-title" id="exampleModalLabel">Wybierz zakres dat:</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            <p class="my-2">Zakres od:</p>
-            <div class="form-floating my-1">
-              <input type="date" class="form-control" id="dateInput" required />
-              <label for="dateInput">Data</label>
+          <form method="post">
+            <div class="modal-body">
+              <p class="my-2">Zakres od:</p>
+              <div class="form-floating my-1">
+                <input type="date" class="form-control" id="dateInput" name="range_from" required />
+                <label for="dateInput">Data</label>
+              </div>
+              <p class="my-2">Zakres do:</p>
+              <div class="form-floating my-1">
+                <input type="date" class="form-control" id="dateInput" name="range_to" required />
+                <label for="dateInput">Data</label>
+              </div>
             </div>
-            <p class="my-2">Zakres do:</p>
-            <div class="form-floating my-1">
-              <input type="date" class="form-control" id="dateInput" required />
-              <label for="dateInput">Data</label>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Close
+              </button>
+              <button type="submit" class="btn btn-primary" name="submit_date">
+                Ok
+              </button>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              Close
-            </button>
-            <button type="button" class="btn btn-primary">
-              Ok
-            </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -338,6 +385,7 @@ try {
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
   <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+  <script src="../js/index.js"></script>
 </body>
 
 </html>
